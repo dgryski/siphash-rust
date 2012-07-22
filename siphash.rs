@@ -34,7 +34,7 @@ fn crypto_auth(m : ~[u8], k : ~[u8]) -> u64 {
     let mut v3 = k1 ^ 0x7465646279746573;
 
     let mlen = vec::len(m);
-    let w = (mlen+1)/8 - 1; // words in main body
+    let w = mlen/8; // complete words in main body
     let rem = mlen & 7;
 
     for uint::range(0u, w) |i| {
