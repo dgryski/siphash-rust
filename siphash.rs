@@ -1,3 +1,5 @@
+// Rust implementation of the Siphash-2-4 PRF
+// For more info on Siphash: http://131002.net/siphash
 #[link(name = "siphash", author = "dgryski", vers = "0.1")];
 
 use std;
@@ -83,11 +85,12 @@ fn crypto_auth(&&m : ~[u8], &&k : ~[u8]) -> u64 {
 }
 
 #[test]
-fn test_reference() {
-    // the example from the siphash paper: http://131002.net/siphash/siphash.pdf
+fn test_paper() {
+    // the example from appendix A of http://131002.net/siphash/siphash.pdf
     let k = ~[0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f];
     let m = ~[0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e];
     let h = crypto_auth(m, k);
 
     assert h == 0xa129ca6149be45e5;
 }
+
