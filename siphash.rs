@@ -25,7 +25,7 @@ fn sipround(&v0 : u64, &v1 : u64, &v2 : u64, &v3 : u64) {
         v2 += v1; v1=rotl(v1,17); v1 ^= v2; v2=rotl(v2,32);
 }
 
-fn crypto_auth(m : ~[u8], k : ~[u8]) -> u64 {
+fn crypto_auth(&&m : ~[u8], &&k : ~[u8]) -> u64 {
 
     let k0 = load_u64(k);
     let k1 = load_u64(vec::slice(k, 8, 16));
