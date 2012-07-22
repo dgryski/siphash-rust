@@ -6,7 +6,7 @@ use std;
 fn rotl(x : u64, b : uint) -> u64 { ((x) << (b)) | ((x) >> (64 - (b))) }
 
 #[inline(always)]
-fn load_u64(b : ~[u8]) -> u64 {
+fn load_u64(b : &[u8]) -> u64 {
     (b[0] as u64 <<  0) |
     (b[1] as u64 <<  8) |
     (b[2] as u64 << 16) |
@@ -27,7 +27,7 @@ fn sipround(&v0 : u64, &v1 : u64, &v2 : u64, &v3 : u64) {
 
 fn crypto_auth(&&m : ~[u8], &&k : ~[u8]) -> u64 {
 
-    let k0 = load_u64(k);
+    let k0 = load_u64(vec::slice(k, 0, 8));
     let k1 = load_u64(vec::slice(k, 8, 16));
 
     let mut v0 = k0 ^ 0x736f6d6570736575;
