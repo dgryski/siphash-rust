@@ -8,15 +8,15 @@ use std;
 fn rotl(x : u64, b : uint) -> u64 { ((x) << (b)) | ((x) >> (64 - (b))) }
 
 #[inline(always)]
-fn load_u64(b : &[u8]) -> u64 {
-    (b[0] as u64 <<  0) |
-    (b[1] as u64 <<  8) |
-    (b[2] as u64 << 16) |
-    (b[3] as u64 << 24) |
-    (b[4] as u64 << 32) |
-    (b[5] as u64 << 40) |
-    (b[6] as u64 << 48) |
-    (b[7] as u64 << 56)
+fn load_u64(b : &[u8], i : uint) -> u64 {
+    (b[0+i] as u64 <<  0) |
+    (b[1+i] as u64 <<  8) |
+    (b[2+i] as u64 << 16) |
+    (b[3+i] as u64 << 24) |
+    (b[4+i] as u64 << 32) |
+    (b[5+i] as u64 << 40) |
+    (b[6+i] as u64 << 48) |
+    (b[7+i] as u64 << 56)
 }
 
 #[inline(always)]
@@ -29,8 +29,8 @@ fn sipround(&v0 : u64, &v1 : u64, &v2 : u64, &v3 : u64) {
 
 fn crypto_auth(&&m : ~[u8], &&k : ~[u8]) -> u64 {
 
-    let k0 = load_u64(vec::slice(k, 0, 8));
-    let k1 = load_u64(vec::slice(k, 8, 16));
+    let k0 = load_u64(k, 0);
+    let k1 = load_u64(k, 8);
 
     let mut v0 = k0 ^ 0x736f6d6570736575;
     let mut v1 = k1 ^ 0x646f72616e646f6d;
@@ -41,15 +41,18 @@ fn crypto_auth(&&m : ~[u8], &&k : ~[u8]) -> u64 {
     let w = mlen/8; // complete words in main body
     let rem = mlen & 7;
 
-    for uint::range(0u, w) |i| {
-        let mi = load_u64(vec::slice(m, i*8, i*8+8));
+    let mut i = 0u;
+    while i < w {
+
+        let mi = load_u64(m, i);
 
         v3 ^= mi;
 
         sipround(v0, v1, v2, v3);
         sipround(v0, v1, v2, v3);
 
-        v0 ^= mi
+        v0 ^= mi;
+        i += 8;
     }
 
     let mut mfinal = (mlen as u64 % 256) << 56;
