@@ -4,12 +4,11 @@
 
 use std;
 
-
-
 iface siphash {
     fn input(~[u8]);
     fn input_str(~str);
-    fn result() -> u64;
+    fn result() -> ~[u8];
+    fn result_str() -> ~str;
     fn reset();
 }
 
@@ -96,7 +95,7 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
         st.ntail = rem
     }
 
-    fn mk_result(st : sipstate) -> u64 {
+    fn mk_result(st : sipstate) -> ~[u8] {
 
         let mut v0 = st.v0;
         let mut v1 = st.v1;
@@ -129,7 +128,18 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
         sipround(v0, v1, v2, v3);
         sipround(v0, v1, v2, v3);
 
-        ret v0 ^ v1 ^ v2 ^ v3;
+        let h = v0 ^ v1 ^ v2 ^ v3;
+
+        ret ~[
+            (h >> 0) as u8,
+            (h >> 8) as u8,
+            (h >> 16) as u8,
+            (h >> 24) as u8,
+            (h >> 32) as u8,
+            (h >> 40) as u8,
+            (h >> 48) as u8,
+            (h >> 56) as u8,
+        ];
     }
 
    impl of siphash for sipstate {
@@ -143,7 +153,13 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
         }
         fn input(msg: ~[u8]) { add_input(self, msg); }
         fn input_str(msg: ~str) { add_input(self, str::bytes(msg)); }
-        fn result() -> u64 { ret mk_result(self); }
+        fn result() -> ~[u8] { ret mk_result(self); }
+        fn result_str() -> ~str {
+            let r = mk_result(self);
+            let mut s = ~"";
+            for vec::each(r) |b| { s += uint::to_str(b as uint, 16u); }
+            ret s;
+        }
     }
 
     let st = {
@@ -188,30 +204,45 @@ fn sipround(&v0 : u64, &v1 : u64, &v2 : u64, &v3 : u64) {
 
 
 
+
 #[test]
 fn test_paper() {
+
+    fn check_vec_eq(v0: ~[u8], v1: ~[u8]) -> bool {
+                assert (vec::len::<u8>(v0) == vec::len::<u8>(v1));
+                let len = vec::len::<u8>(v0);
+                let mut i = 0u;
+                while i < len {
+                    let a = v0[i];
+                    let b = v1[i];
+                    if (a != b) { ret false }
+                    i += 1u;
+                }
+                ret true;
+            }
+
     // the example from appendix A of http://131002.net/siphash/siphash.pdf
-    let k = ~[0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f];
     let m = ~[0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e];
+    let ans = ~[0xe5 as u8, 0x45, 0xbe, 0x49, 0x61, 0xca, 0x29, 0xa1];
 
     let sh = siphash(0x0706050403020100, 0x0f0e0d0c0b0a0908);
 
     sh.input(~[0x00,0x01,0x02,0x03,0x04,0x05]);
     sh.input(~[0x06]);
 
-    assert sh.result() != 0xa129ca6149be45e5;
+    assert !check_vec_eq(sh.result(), ans);
 
     sh.input(~[0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e]);
 
-    assert sh.result() == 0xa129ca6149be45e5;
+    assert check_vec_eq(sh.result(), ans);
 
     sh.reset();
 
-    assert sh.result() != 0xa129ca6149be45e5;
+    assert !check_vec_eq(sh.result(), ans);
 
     sh.input(m);
 
-    assert sh.result() == 0xa129ca6149be45e5;
+    assert check_vec_eq(sh.result(), ans);
 
 }
 
