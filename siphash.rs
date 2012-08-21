@@ -4,7 +4,7 @@
 
 use std;
 
-iface siphash {
+trait siphash {
     fn input(~[u8]);
     fn input_str(~str);
     fn result() -> ~[u8];
@@ -43,7 +43,7 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
                 }
                 st.ntail += length;
 
-                ret;
+                return;
             }
 
             let mut t = 0;
@@ -130,7 +130,7 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
 
         let h = v0 ^ v1 ^ v2 ^ v3;
 
-        ret ~[
+        return ~[
             (h >> 0) as u8,
             (h >> 8) as u8,
             (h >> 16) as u8,
@@ -142,7 +142,7 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
         ];
     }
 
-   impl of siphash for sipstate {
+   impl sipstate : siphash {
         fn reset() {
             self.length = 0;
             self.v0 = self.k0 ^ 0x736f6d6570736575;
@@ -153,12 +153,12 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
         }
         fn input(msg: ~[u8]) { add_input(self, msg); }
         fn input_str(msg: ~str) { add_input(self, str::bytes(msg)); }
-        fn result() -> ~[u8] { ret mk_result(self); }
+        fn result() -> ~[u8] { return mk_result(self); }
         fn result_str() -> ~str {
             let r = mk_result(self);
             let mut s = ~"";
             for vec::each(r) |b| { s += uint::to_str(b as uint, 16u); }
-            ret s;
+            return s;
         }
     }
 
@@ -176,7 +176,7 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
 
     let sh = st as siphash;
     sh.reset();
-    ret sh;
+    return sh;
 }
 
 #[inline(always)]
@@ -275,7 +275,7 @@ fn test_siphash() {
     fn to_hex_str(v : ~[u8]) -> ~str {
         let mut s = ~"";
         for vec::each(v) |b| { s += uint::to_str(b as uint, 16u); }
-        ret s;
+        return s;
     }
 
     let k0 = 0x0706050403020100u64;
