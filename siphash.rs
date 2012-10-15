@@ -152,7 +152,7 @@ fn siphash(key0 : u64, key1 : u64) -> siphash {
             self.ntail = 0;
         }
         fn input(msg: ~[u8]) { add_input(self, msg); }
-        fn input_str(msg: ~str) { add_input(self, str::bytes(msg)); }
+        fn input_str(msg: ~str) { do str::as_bytes(msg) |b| { add_input(self, b) } }
         fn result() -> ~[u8] { return mk_result(self); }
         fn result_str() -> ~str {
             let r = mk_result(self);
